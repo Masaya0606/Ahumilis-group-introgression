@@ -1,0 +1,80 @@
+# Load necessary library
+if (!require(moments)) install.packages("moments", dependencies = TRUE)
+library(moments)
+
+# Load the data
+data_filename <- "data.txt"  # Specify the data file name
+data <- read.table(data_filename, header = TRUE)
+
+# Define the function to calculate confidence intervals
+calculate_confidence_intervals <- function(column_data, method = "auto") {
+  # Do not process if the data is too small
+  if (length(column_data) < 3) {
+    return(list(lower = NA, upper = NA, method = "insufficient_data", mean = NA, median = NA))
+  }
+  
+  # Remove NAs
+  column_data <- na.omit(column_data)
+  
+  # Calculate skewness and kurtosis
+  skewness_value <- skewness(column_data)
+  kurtosis_value <- kurtosis(column_data)
+  
+  # Automatically select the method if not specified
+  if (method == "auto") {
+    if (!is.na(skewness_value) && !is.na(kurtosis_value) && abs(skewness_value) < 1 && abs(kurtosis_value - 3) < 1) {
+      method <- "normal"
+    } else {
+      method <- "bootstrap"
+    }
+  }
+  
+  # Calculate confidence intervals
+  if (method == "normal") {
+    # Confidence interval based on normal distribution
+    mean_value <- mean(column_data)
+    std_error <- sd(column_data) / sqrt(length(column_data))
+    conf_interval <- mean_value + qnorm(c(0.025, 0.975)) * std_error
+    method_used <- "normal"
+  } else if (method == "bootstrap") {
+    # Confidence interval using bootstrap method
+    n_iterations <- 1000
+    means <- numeric(n_iterations)
+    for (i in 1:n_iterations) {
+      sample <- sample(column_data, size = length(column_data), replace = TRUE)
+      means[i] <- mean(sample)
+    }
+    conf_interval <- quantile(means, probs = c(0.025, 0.975))
+    mean_value <- mean(column_data)
+    method_used <- "bootstrap"
+  } else if (method == "quantile") {
+    # Confidence interval using quantile method
+    conf_interval <- quantile(column_data, probs = c(0.025, 0.975))
+    mean_value <- mean(column_data)
+    method_used <- "quantile"
+  } else {
+    stop("Invalid method specified.")
+  }
+  
+  median_value <- median(column_data)
+  
+  return(list(lower = conf_interval[1], upper = conf_interval[2], method = method_used, mean = mean_value, median = median_value))
+}
+
+# Calculate confidence intervals for each column
+results <- data.frame(Column = character(), `2.5%` = numeric(), `97.5%` = numeric(), Method = character(), Mean = numeric(), Median = numeric(), stringsAsFactors = FALSE)
+
+for (col_name in colnames(data)) {
+  column_data <- data[[col_name]]
+  if (is.numeric(column_data)) {
+    conf_interval <- calculate_confidence_intervals(column_data)
+    results <- rbind(results, data.frame(Column = col_name, `2.5%` = conf_interval$lower, `97.5%` = conf_interval$upper, Method = conf_interval$method, Mean = conf_interval$mean, Median = conf_interval$median, stringsAsFactors = FALSE))
+  }
+}
+
+# Save results to a CSV file
+csv_filename <- paste0(sub("\\.txt$", "", data_filename), "_confidence_intervals_results.csv")
+write.csv(results, csv_filename, row.names = FALSE)
+
+# Print the results
+print(results)
