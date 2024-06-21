@@ -1,0 +1,34 @@
+// Priors and rules file
+// *********************
+
+[PARAMETERS]
+//#isInt? #name   #dist.#min  #max
+//all N are in number of haploid individuals
+1  ANCSIZE1$   unif     1000  100000   output
+1  ANCSIZE2$   unif     1000  100000   output
+1  NPOP0       unif     1000  100000   output
+1  NPOP1       unif     1000  100000   output
+1  NPOP2       unif     1000  100000   output
+0  N0M10       logunif  1e-2 20       hide
+0  N0M20       logunif  1e-2 20       hide
+0  N1M00       logunif  1e-2 20       hide
+0  N1M20       logunif  1e-2 20       hide
+0  N2M00       logunif  1e-2 20       hide
+0  N2M20       logunif  1e-2 20       hide
+0  RSANC_ge     logunif 0.1      100     output
+0  RSANC_hu     logunif 0.1      100     output
+0  RSANC_mon    logunif 0.1      100     output
+0  SPTIME       unif     1    1.5     output
+1  TDIV1        unif     10   20000   output
+1  TDIV2        unif     20000  200000   output
+1  TBOT         unif     TDIV1   TDIV2  output  paramInRange
+[COMPLEX PARAMETERS]
+0  MIG_01  = N0M10/NPOP0       output
+0  MIG_02  = N0M20/NPOP0       output
+0  MIG_10  = N1M00/NPOP1       output
+0  MIG_12  = N1M20/NPOP1       output
+0  MIG_20  = N2M00/NPOP2       output
+0  MIG_21  = N2M20/NPOP2       output
+1  TDIV3 = TDIV2 * SPTIME      output
+0  RESIZE0$ = ANCSIZE1$/NPOP0
+0  RESIZE1$ = ANCSIZE2$/NPOP1
