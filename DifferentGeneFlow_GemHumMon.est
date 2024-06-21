@@ -1,0 +1,51 @@
+// Priors and rules file
+// *********************
+
+[PARAMETERS]
+//#isInt? #name   #dist.#min  #max
+//all N are in number of haploid individuals
+1  ANCSIZE1$   unif     1000  100000   output
+1  ANCSIZE2$   unif     1000  100000   output
+1  NPOP0       unif     1000  100000   output
+1  NPOP1       unif     1000  100000   output
+1  NPOP2       unif     1000  100000   output
+0  RSANC1_gem       logunif  0.1   100      output
+0  RSANC1_hum       logunif  0.1   100      output
+0  RSANC1_mon       logunif  0.1   100      output
+0  RSANC2_gem       logunif  0.1   100      output
+0  RSANC2_hum       logunif  0.1   100      output
+0  RSANC2_mon       logunif  0.1   100      output
+0  SPTIME       unif   1   1.5        output
+0  N01M10       logunif  1e-2 20       hide
+0  N01M20       logunif  1e-2 20       hide
+0  N11M00       logunif  1e-2 20       hide
+0  N11M20       logunif  1e-2 20       hide
+0  N21M00       logunif  1e-2 20       hide
+0  N21M10       logunif  1e-2 20       hide
+0  N02M10       logunif  1e-2 20       hide
+0  N02M20       logunif  1e-2 20       hide
+0  N12M01       logunif  1e-2 20       hide
+0  N12M21       logunif  1e-2 20       hide
+0  N22M01       logunif  1e-2 20       hide
+0  N22M21       logunif  1e-2 20       hide
+0  TPROP       logunif 0.0001    0.5     output
+1  TDIV1        unif     100   200000   output
+1  TDIV2        unif     200000  300000   outout
+
+[COMPLEX PARAMETERS]
+0  MIG_01  = N01M10/NPOP0       output
+0  MIG_02  = N01M20/NPOP0       output
+0  MIG_10  = N11M00/NPOP1       output
+0  MIG_12  = N11M20/NPOP1       output
+0  MIG_20  = N21M00/NPOP2       output
+0  MIG_21  = N21M10/NPOP2       output
+0  MIG2_01  = N02M10/NPOP0       output
+0  MIG2_02  = N02M20/NPOP0       output
+0  MIG2_10  = N12M01/NPOP1       output
+0  MIG2_12  = N12M21/NPOP1       output
+0  MIG2_20  = N22M01/NPOP2       output
+0  MIG2_21  = N22M21/NPOP2       output
+1  CHANGM = TDIV1 * TPROP       output
+1  TDIV3 = TDIV2 * SPTIME      output
+0  RESIZE0$ = ANCSIZE1$/NPOP0
+0  RESIZE1$ = ANCSIZE2$/NPOP1
