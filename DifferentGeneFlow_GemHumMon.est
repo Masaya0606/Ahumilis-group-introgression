@@ -29,7 +29,7 @@
 0  N22M01       logunif  1e-2 20       hide
 0  N22M21       logunif  1e-2 20       hide
 0  TPROP       logunif 0.0001    0.5     output
-1  TDIV1        unif     100   200000   output
+1  Tadmix1        unif     100   200000   output
 1  TDIV2        unif     200000  300000   outout
 
 [COMPLEX PARAMETERS]
@@ -45,7 +45,7 @@
 0  MIG2_12  = N12M21/NPOP1       output
 0  MIG2_20  = N22M01/NPOP2       output
 0  MIG2_21  = N22M21/NPOP2       output
-1  CHANGM = TDIV1 * TPROP       output
+1  Tadmix2 = Tadmix1 * TPROP       output
 1  TDIV3 = TDIV2 * SPTIME      output
 0  RESIZE0$ = ANCSIZE1$/NPOP0
 0  RESIZE1$ = ANCSIZE2$/NPOP1
