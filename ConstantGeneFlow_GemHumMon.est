@@ -21,7 +21,7 @@
 0  SPTIME       unif     1    1.5     output
 1  TDIV1        unif     10   20000   output
 1  TDIV2        unif     20000  200000   output
-1  TBOT         unif     TDIV1   TDIV2  output  paramInRange
+1  Tadmix         unif     TDIV1   TDIV2  output  paramInRange
 [COMPLEX PARAMETERS]
 0  MIG_01  = N0M10/NPOP0       output
 0  MIG_02  = N0M20/NPOP0       output
