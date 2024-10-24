@@ -24,9 +24,9 @@ MIG_20 MIG_21 0
 0 0 0
 //historical event: time, source, sink, migrants, new deme size, growth rate, migr mat index
 5 historical event 
-TBOT 0 0 0 RSANC_ge 0 0
-TBOT 2 2 0 RSANC_hu 0 0
-TBOT 1 1 0 RSANC_mon 0 0 
+Tadmix 0 0 0 RSANC_ge 0 0
+Tadmix 2 2 0 RSANC_hu 0 0
+Tadmix 1 1 0 RSANC_mon 0 0 
 TDIV2 0 1 1 RESIZE0$ 0 1
 TDIV3 1 2 1 RESIZE1$ 0 1
 //Number of independent loci [chromosome] 
