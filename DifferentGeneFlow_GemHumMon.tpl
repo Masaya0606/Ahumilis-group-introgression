@@ -28,12 +28,12 @@ MIG2_20 MIG2_21 0
 0 0 0
 //historical event: time, source, sink, migrants, new deme size, growth rate, migr mat index
 8 historical event
-CHANGM 0 0 1 RSANC1_gem 0 0
-CHANGM 1 1 1 RSANC1_hum 0 0
-CHANGM 2 2 1 RSANC1_mon 0 0
-TDIV1 0 0 1 RSANC2_gem 0 1
-TDIV1 1 1 1 RSANC2_hum 0 1
-TDIV1 2 2 1 RSANC2_mon 0 1
+Tadmix2 0 0 1 RSANC1_gem 0 0
+Tadmix2 1 1 1 RSANC1_hum 0 0
+Tadmix2 2 2 1 RSANC1_mon 0 0
+Tadmix1 0 0 1 RSANC2_gem 0 1
+Tadmix1 1 1 1 RSANC2_hum 0 1
+Tadmix1 2 2 1 RSANC2_mon 0 1
 TDIV2 0 1 1 RESIZE0$ 0 2
 TDIV3 1 2 1 RESIZE1$ 0 2
 //Number of independent loci [chromosome] 
