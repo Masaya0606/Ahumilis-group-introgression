@@ -1,0 +1,12 @@
+##D statistics to detect introgression
+#!/bin/sh
+#$ -S /bin/bash
+#$ -cwd
+#$ -l s_vmem=56G
+#$ -l mem_req=56G
+#$ -l d_rt=100:00:00
+#$ -l s_rt=100:00:00
+Dsuite Dtrios GemHumMon_outdigi_geno015_maf001_hwe.vcf SET_digi.txt -n GemHumMon_outdigi_geno005_maf001_hwe.vcf -t GemHumMon_outAdigi.tree  -c
+
+##Dsuite Dinvetigate to detect introgressive regions
+Dsuite Dinvestigate -w 25,5 GemHumMonoutAdigi_geno015_maf001_hwe.vcf SET_digi.txt gem_hum_mon.txt 
