@@ -6,7 +6,7 @@
 #$ -l mem_req=56G
 #$ -l d_rt=100:00:00
 #$ -l s_rt=100:00:00
-Dsuite Dtrios GemHumMon_outdigi_geno015_maf001_hwe.vcf SET_digi.txt -n GemHumMon_outdigi_geno005_maf001_hwe.vcf -t GemHumMon_outAdigi.tree  -c
+Dsuite Dtrios GemHumMon_outdigi_geno005_maf001_hwe.vcf SET_digi.txt -n GemHumMon_outdigi_geno005_maf001_hwe.vcf -t GemHumMon_outAdigi.tree  -c
 
 ##Dsuite Dinvetigate to detect introgressive regions
-Dsuite Dinvestigate -w 25,5 GemHumMonoutAdigi_geno015_maf001_hwe.vcf SET_digi.txt gem_hum_mon.txt 
+Dsuite Dinvestigate -w 5,1 GemHumMonoutAdigi_geno005_maf001_hwe.vcf SET_digi.txt gem_hum_mon.txt 
