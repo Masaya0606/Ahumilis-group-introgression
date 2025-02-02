@@ -1,0 +1,88 @@
+##Statistical analyses of Corssing rates for A.cf.humilis group and hybrds
+library(readxl)
+fert<-read_excel("~/path/Crossing_RateGemHumMon20_24.xlsx", sheet ="Sheet1")
+fert$Combination <- as.factor(fert$Combination)
+
+
+# Load necessary libraries
+library(lme4)
+library(multcomp)
+library(DHARMa)
+library(car)
+
+# Fit the GLMM
+model <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1|Sperm) + (1|Egg), 
+               data = fert, family = binomial)
+#Warning message:
+ # In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  #               Model failed to converge with max|grad| = 0.00592185 (tol = 0.002, component 1)
+#removed random effect of sperm
+
+# Making data set without Selffertilization
+fert_no_self <- subset(fert, Combination != "Self")
+
+# GLMM setting REgg as random effects
+model_no_self <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1|Egg), 
+                       data = fert_no_self, family = binomial)
+# GLMM setting Egg and sperm as random effects
+model_no_self_sperm_egg <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1|Egg)+(1|Sperm), 
+                       data = fert_no_self, family = binomial)
+
+# Summary of rondom effect
+summary(model_no_self)
+summary(model_no_self_sperm_egg)
+# Check for overdispersion
+sim_no_self <- simulateResiduals(fittedModel = model_no_self)
+plot(sim_no_self)
+testDispersion(model_no_self)
+sim_no_self_sperm_egg<-simulateResiduals(fittedModel = model_no_self_sperm_egg)
+plot(sim_no_self_sperm_egg)
+testDispersion(model_no_self_sperm_egg)
+#overdispersion is suspected
+# Add observation levels as random effect as "OLRE"
+fert_no_self$Obs <- factor(1:nrow(fert_no_self))
+
+model_olre <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1|Egg) + (1|Obs), 
+                    data = fert_no_self, family = binomial)
+
+# Reexamined overdispersion
+sim_olre <- simulateResiduals(fittedModel = model_olre)
+plot(sim_olre)
+testDispersion(sim_olre)
+#Overdispersion was not detected
+summary(model_olre)
+#multiple comparion
+tukey_olre <- glht(model_olre, linfct = mcp(Combination = "Tukey"))
+summary(tukey_olre)
+
+#too many comparisons, so we did FDR correction
+p_values_olre <- summary(tukey_olre)$test$pvalues
+p_adjusted_olre <- p.adjust(p_values_olre, method = "fdr")
+p_adjusted_olre
+
+##all combinations were not significantly different.
+
+library(emmeans)
+emmeans_olre <- emmeans(model_olre, pairwise ~ Combination, adjust = "fdr")
+summary(emmeans_olre)
+
+## no significant different
+model_no_egg <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1 | Obs), 
+                      data = fert_no_self, family = binomial)
+summary(model_no_egg)
+sim_olre <- simulateResiduals(fittedModel = model_no_egg)
+plot(sim_olre)
+testDispersion(sim_olre)
+
+##again we set only egg model
+model_only_egg <- glmer(cbind(Ferttilization, Eggs) ~ Combination + (1 | Egg), 
+                      data = fert_no_self, family = binomial)
+summary(model_only_egg)
+sim_olre <- simulateResiduals(fittedModel = model_only_egg)
+plot(sim_olre)
+testDispersion(sim_olre)
+
+##AIC was bit best (1439.4) comaried to (1|Egg)+(1|Obs), then, we have chosen model_olre.Comparison was too many, therefore, we have chosen fdr multple comparison
+emmeans_olre <- emmeans(model_olre, pairwise ~ Combination, adjust = "fdr")
+summary(emmeans_olre)
+# Finally, no significant differences were detected.
