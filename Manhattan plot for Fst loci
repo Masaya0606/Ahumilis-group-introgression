@@ -1,0 +1,255 @@
+##manhattan plot
+if (!require(qqman)) {
+  install.packages("qqman")
+  library(qqman)
+}
+#data読み込み ShellでFst値の計算結果のCHROMとBPの箇所を繋ぎ１行目にSNPsとして追加する。またScafoldの文字列も整理しておく。このSNPs情報はhighlighとしてHigh FstやTajima7SDの領域の指定にも使える
+Fst_fileterd_FdM_gem_hum <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_hum.weir.fst_ed2_manhattan',    # 区切り文字をタブに指定
+                                     header = TRUE, sep = "", strip.white = TRUE)
+Fst_fileterd_FdM_gem_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_mon.weir.fst_ed2_manhattan',    # 区切り文字をタブに指定
+                                     header = TRUE, sep = "", strip.white = TRUE)
+Fst_fileterd_FdM_hum_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.hum_mon.weir.fst_ed2_manhattan',
+                                     header = TRUE, sep = "", strip.white = TRUE)
+                                     
+# Read data set for highlight. The highlight poistion was same as SNPs in the above files.ハイライトする箇所のファイルを読み込み（例: highlight_positions.csv）
+highlight_data_gem_hum <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_hum.weir.fst_ed_95per_adaptive_introgressive_loci_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.hum_mon.weir.fst_ed_95per_adaptive_introgressive_loci_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_mon.weir.fst_ed_95per_adaptive_introgressive_loci_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_specific <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_mon.weir.fst_ed_95per_adaptive_introgressive_loci_specific_gem_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_hum_highFdM_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_hum.weir.fst_ed2_HighFdmLowTajimaD_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon_highFdM_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.hum_mon.weir.fst_ed2_HighFdmLowTajimaD_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_highFdM_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem_mon.weir.fst_ed2_HighFdmLowTajimaD_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_hum_highFdM <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/High_fdM_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_hum_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon_highFdM <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/High_fdM_GemHumMon2401refAgemv_geno005_maf001_hwe_hum_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_highFdM <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/High_fdM_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_hum_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_hum_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_GemHumMon2401refAgemv_geno005_maf001_hwe_hum_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_lowTajimaD <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+
+highlight_data_gem_hum_lowTajimaD_gem <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_gem_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_hum_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_hum_lowTajimaD_hum <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_hum_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_hum_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_lowTajimaD_gem <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_gem_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_gem_mon_lowTajimaD_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_mon_GemHumMon2401refAgemv_geno005_maf001_hwe_gem_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon_lowTajimaD_hum <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_hum_GemHumMon2401refAgemv_geno005_maf001_hwe_hum_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+highlight_data_hum_mon_lowTajimaD_mon <- read.csv('NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/Low_TajimaD_mon_GemHumMon2401refAgemv_geno005_maf001_hwe_hum_mon_highlight',header=TRUE,sep = "", strip.white = TRUE)
+
+
+# Calculate 95th and 5th percentiles 95パーセンタイルと5パーセンタイルを計算
+p95_gem_hum <- quantile(Fst_fileterd_FdM_gem_hum$WEIR_AND_COCKERHAM_FST, 0.95, na.rm = TRUE)
+p95_gem_mon <- quantile(Fst_fileterd_FdM_gem_mon$WEIR_AND_COCKERHAM_FST, 0.95, na.rm = TRUE)
+p95_hum_mon <- quantile(Fst_fileterd_FdM_hum_mon$WEIR_AND_COCKERHAM_FST, 0.95, na.rm = TRUE)
+
+par(mfrow = c(3, 1), mai = c(0.3, 0.8, 0.2, 0.2))  # 3行1列のグリッドに分割
+
+# Manhattan plot for Fst loci for A.cf. gemmifera and A.cf. humilis プロットの作成
+snpsOfInterest<-highlight_data_gem_hum$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# Add lines of 95th percentile 95パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattan plot for Fst loci for A.cf. gemmifera and A.cf. monticulosaプロットの作成
+snpsOfInterest<-highlight_data_gem_mon$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+
+# Manhattan for Fst loci for A.cf. monticulosa and A.cf. humilisプロットの作成
+snpsOfInterest<-highlight_data_hum_mon$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成
+snpsOfInterest<-highlight_data_gem_mon_specific$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon only gem hum"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+
+# Manhattanプロットの作成 HiFdm&LowTajimaD
+snpsOfInterest<-highlight_data_gem_hum_highFdM_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum High fdM Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattanプロットの作成 HiFdm&LowTajimaD
+snpsOfInterest<-highlight_data_gem_mon_highFdM_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon High fdM Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 HiFdm&LowTajimaD
+snpsOfInterest<-highlight_data_hum_mon_highFdM_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon High fdM Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 HiFdm
+snpsOfInterest<-highlight_data_gem_hum_highFdM$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum High fdM"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattanプロットの作成 HiFdm&LowTajimaD
+snpsOfInterest<-highlight_data_gem_mon_highFdM$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon High fdM"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 HiFdm
+snpsOfInterest<-highlight_data_hum_mon_highFdM$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon High fdM"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD
+snpsOfInterest<-highlight_data_gem_hum_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattanプロットの作成 LowTajimaD
+snpsOfInterest<-highlight_data_gem_mon_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD
+snpsOfInterest<-highlight_data_hum_mon_lowTajimaD$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon Low Tajima's D"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD gem
+snpsOfInterest<-highlight_data_gem_hum_lowTajimaD_gem$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum Low Tajima's D gem"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattanプロットの作成 LowTajimaD hum
+snpsOfInterest<-highlight_data_gem_hum_lowTajimaD_hum$SNP
+manhattan(Fst_fileterd_FdM_gem_hum, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Hum Low Tajima's D hum"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_hum, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD gem
+snpsOfInterest<-highlight_data_gem_mon_lowTajimaD_gem$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon Low Tajima's D gem"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD mon
+snpsOfInterest<-highlight_data_gem_mon_lowTajimaD_mon$SNP
+manhattan(Fst_fileterd_FdM_gem_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Gem Mon Low Tajima's D mon"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_gem_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 LowTajimaD hum
+snpsOfInterest<-highlight_data_hum_mon_lowTajimaD_hum$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon Low Tajima's D hum"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight = snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+# Manhattanプロットの作成 Low TajimaD mon
+snpsOfInterest<-highlight_data_hum_mon_lowTajimaD_mon$SNP
+manhattan(Fst_fileterd_FdM_hum_mon, chr = "CHR", bp = "BP", p = "WEIR_AND_COCKERHAM_FST",
+          main = paste("Fst Hum Mon Low Tajima's D mon"),
+          ylim = c(0, 1),
+          logp = FALSE,  # log変換を無効にする
+          ylab = "Fst",
+          highlight=snpsOfInterest)  # ハイライトの色を指定
+# 95パーセンタイルと5パーセンタイルの補助線を追加
+abline(h = p95_hum_mon, col = "red", lty = 2)
+
+par(mfrow = c(1, 1))
