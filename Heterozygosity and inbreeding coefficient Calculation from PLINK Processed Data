@@ -1,0 +1,413 @@
+# Load the file
+GemHumMonHyaRefGemPlink <- read.table("/Users/moritamasaya/NGS_analyses/Relatedness_vcftools/GemHumMon2401geno035maf035HWE/GemHumMonHyaRefGem_geno005_maf001_hwe_header.het", header=T)
+
+# Data after PLINK processing
+GemHumMonHyaRefGemPlink$He <- c((GemHumMonHyaRefGemPlink$N.NM. - GemHumMonHyaRefGemPlink$O.HOM.) / GemHumMonHyaRefGemPlink$N.NM.)
+GemHumMonHyaRefGemPlink$Ho <- c((GemHumMonHyaRefGemPlink$N.NM. - GemHumMonHyaRefGemPlink$E.HOM.) / GemHumMonHyaRefGemPlink$N.NM.)
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Check the data
+head(GemHumMonHyaRefGemPlink)
+
+# Set the order of species on the X-axis
+GemHumMonHyaRefGemPlink$Species <- factor(GemHumMonHyaRefGemPlink$Species, levels = c("hya", "bif", "cyt", "sub", "gem", "hum", "mon", "hyb"))
+
+# Ho (Observed heterozygosity)
+ggplot(GemHumMonHyaRefGemPlink, aes(x = Species, y = Ho)) +
+  geom_boxplot(aes(fill = Species), alpha = 0.7, outlier.shape = NA) +  # Change boxplot color
+  geom_jitter(aes(color = Species), width = 0.2, size = 1.5, alpha = 0.6) +  # Change dot color
+  labs(
+    title = "Species-wise Boxplot for Ho",
+    x = "Species",
+    y = "Ho",
+    fill = "Species",
+    color = "Species"
+  ) +
+  # Customize colors
+  scale_fill_manual(values = c(
+    "hya" = "white", "bif" = "white", "cyt" = "white", "sub" = "white",
+    "gem" = "grey", "hum" = "grey", "mon" = "grey", "hyb" = "grey"
+  )) +
+  scale_color_manual(values = rep("black", 8)) +  # Set all dots to black
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),  # Remove grid lines
+    axis.line = element_line(size = 0.5, color = "black"),  # Draw X and Y axes
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate X-axis labels
+    axis.text.y = element_text(size = 10),  # Adjust Y-axis label font size
+    legend.position = "right"  # Display legend
+  )
+
+# He (Expected heterozygosity)
+ggplot(GemHumMonHyaRefGemPlink, aes(x = Species, y = He)) +
+  geom_boxplot(aes(fill = Species), alpha = 0.7, outlier.shape = NA) +  # Change boxplot color
+  geom_jitter(aes(color = Species), width = 0.2, size = 1.5, alpha = 0.6) +  # Change dot color
+  labs(
+    title = "Species-wise Boxplot for He",
+    x = "Species",
+    y = "He",
+    fill = "Species",
+    color = "Species"
+  ) +
+  scale_fill_manual(values = c(
+    "hya" = "white", "bif" = "white", "cyt" = "white", "sub" = "white",
+    "gem" = "grey", "hum" = "grey", "mon" = "grey", "hyb" = "grey"
+  )) +
+  scale_color_manual(values = rep("black", 8)) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = 0.5, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 10),
+    legend.position = "right"
+  )
+
+# F (Inbreeding coefficient)
+ggplot(GemHumMonHyaRefGemPlink, aes(x = Species, y = F)) +
+  geom_boxplot(aes(fill = Species), alpha = 0.7, outlier.shape = NA) +
+  geom_jitter(aes(color = Species), width = 0.2, size = 1.5, alpha = 0.6) +
+  labs(
+    title = "Species-wise Boxplot for F",
+    x = "Species",
+    y = "Inbreeding coefficient (F)",
+    fill = "Species",
+    color = "Species"
+  ) +
+  scale_fill_manual(values = c(
+    "hya" = "white", "bif" = "white", "cyt" = "white", "sub" = "white",
+    "gem" = "grey", "hum" = "grey", "mon" = "grey", "hyb" = "grey"
+  )) +
+  scale_color_manual(values = rep("black", 8)) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = 0.5, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 10),
+    legend.position = "right"
+  )
+
+##Multiple Comparisons Using FDR Correction
+# Load necessary packages
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("multcomp")) install.packages("multcomp")
+if (!require("emmeans")) install.packages("emmeans")
+
+library(tidyverse)
+library(multcomp)
+library(emmeans)
+
+# Convert necessary columns to appropriate types
+GemHumMonHyaRefGemPlink$Species <- as.factor(GemHumMonHyaRefGemPlink$Species)
+GemHumMonHyaRefGemPlink$He <- as.numeric(GemHumMonHyaRefGemPlink$He)
+GemHumMonHyaRefGemPlink$Ho <- as.numeric(GemHumMonHyaRefGemPlink$Ho)
+
+# He - Generalized Linear Model with FDR correction
+glm_model <- glm(He ~ Species, data = GemHumMonHyaRefGemPlink)
+emmeans_result <- emmeans(glm_model, pairwise ~ Species)
+emmeans_result$contrasts$p.adj <- p.adjust(emmeans_result$contrasts$p.value, method = "fdr")
+summary(emmeans_result$contrasts)
+
+# Ho - Generalized Linear Model with FDR correction
+glm_model <- glm(Ho ~ Species, data = GemHumMonHyaRefGemPlink)
+emmeans_result <- emmeans(glm_model, pairwise ~ Species)
+emmeans_result$contrasts$p.adj <- p.adjust(emmeans_result$contrasts$p.value, method = "fdr")
+summary(emmeans_result$contrasts)
+
+# F - Generalized Linear Model with FDR correction
+glm_model <- glm(F ~ Species, data = GemHumMonHyaRefGemPlink)
+emmeans_result <- emmeans(glm_model, pairwise ~ Species)
+emmeans_result$contrasts$p.adj <- p.adjust(emmeans_result$contrasts$p.value, method = "fdr")
+summary(emmeans_result$contrasts)
+
+#Bootstrap Analysis (N=4 per Species, 100 Iterations)
+# He 
+#Random sampling with 4 samples per species and 100 bootstrap iterations
+results <- replicate(100, {
+  tryCatch({
+    selected_samples <- GemHumMonHyaRefGemPlink %>%
+      group_by(Species) %>%
+      sample_n(4)
+    
+    # GLM
+    glm_model <- glm(He ~ Species, data = selected_samples)
+    
+    # FDR（emmean）
+    tukey_result <- emmeans(glm_model, pairwise ~ Species, adjust = "fdr")
+    
+    # contrasts
+    contrast_summary <- summary(tukey_result$contrasts)
+    pvalues <- contrast_summary$p.value
+    return(pvalues)
+  }, error = function(e) {
+    return(rep(NA, 28))
+  })
+}, simplify = FALSE)
+
+# Convert results into a dataframe
+pvalues_df <- do.call(rbind, results) %>%
+  as.data.frame()
+
+# Display summary of bootstrap results
+contrast_summary <- summary(tukey_result$contrasts)
+column_names <- contrast_summary$contrast  # 比較名が保存されている列
+
+colnames(pvalues_df) <- column_names
+
+print(head(pvalues_df))
+
+# calculate average of p values
+mean_pvalues <- pvalues_df %>%
+  summarise(across(everything(), \(x) mean(x, na.rm = TRUE)))
+
+print(mean_pvalues)
+
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    axis.line = element_line(size = 0.5, color = "black"),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    axis.title.x = element_text(size = 12),         
+    axis.title.y = element_text(size = 12)          
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples of He", 
+    x = "Comparison",                                        
+    y = "P-value He comparsion"                              
+  )
+
+custom_order <- c(
+  "hya - cyt", "bif - cyt", "cyt - sub", "hya - bif", "hya - sub", "bif - sub",
+  "cyt - gem", "cyt - hum", "cyt - mon", 
+  "hya - gem", "hya - hum", "hya - mon", 
+  "bif - gem", "bif - hum", "bif - mon", 
+  "sub - gem", "sub - hum", "sub - mon","gem - hum","gem - mon","hum - mon",
+  "cyt - hyb", "hya - hyb", "bif - hyb", "sub - hyb",
+  "gem - hyb", "hum - hyb", "mon - hyb"
+)
+
+# 
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  mutate(Comparison = factor(Comparison, levels = custom_order)) %>%  
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(size = 0.5, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12)
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples He",
+    x = "Comparison",
+    y = "P-value"
+  )
+
+##Ho
+# 
+results <- replicate(100, {
+  tryCatch({
+    #
+    selected_samples <- GemHumMonHyaRefGemPlink %>%
+      group_by(Species) %>%
+      sample_n(4)
+    
+    # GLM
+    glm_model <- glm(Ho ~ Species, data = selected_samples)
+    
+    # FDR（emmeans）
+    tukey_result <- emmeans(glm_model, pairwise ~ Species, adjust = "fdr")
+    
+    # contrast
+    contrast_summary <- summary(tukey_result$contrasts)
+    pvalues <- contrast_summary$p.value
+    
+    # return results
+    return(pvalues)
+  }, error = function(e) {
+    # If error happens, return NA
+    return(rep(NA, 28))  # Change numbers fdr comparsions
+  })
+}, simplify = FALSE)
+
+# Trasnform into data frame
+pvalues_df <- do.call(rbind, results) %>%
+  as.data.frame()
+
+#
+contrast_summary <- summary(tukey_result$contrasts)
+column_names <- contrast_summary$contrast  # 比較名が保存されている列
+
+#
+colnames(pvalues_df) <- column_names
+
+# 
+print(head(pvalues_df))
+
+# 
+mean_pvalues <- pvalues_df %>%
+  summarise(across(everything(), \(x) mean(x, na.rm = TRUE)))
+
+# 
+print(mean_pvalues)
+
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    axis.line = element_line(size = 0.5, color = "black"),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    axis.title.x = element_text(size = 12),          
+    axis.title.y = element_text(size = 12)           
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples Ho",  
+    x = "Comparison",                                        
+    y = "P-value"                                            
+  )
+custom_order <- c(
+  "hya - cyt", "bif - cyt", "cyt - sub", "hya - bif", "hya - sub", "bif - sub",
+  "cyt - gem", "cyt - hum", "cyt - mon", 
+  "hya - gem", "hya - hum", "hya - mon", 
+  "bif - gem", "bif - hum", "bif - mon", 
+  "sub - gem", "sub - hum", "sub - mon","gem - hum","gem - mon","hum - mon",
+  "cyt - hyb", "hya - hyb", "bif - hyb", "sub - hyb",
+  "gem - hyb", "hum - hyb", "mon - hyb"
+)
+
+# Plot again
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  mutate(Comparison = factor(Comparison, levels = custom_order)) %>%  
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(size = 0.5, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12)
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples Ho",
+    x = "Comparison",
+    y = "P-value"
+  )
+
+#F
+# 
+results <- replicate(100, {
+  tryCatch({
+    # 
+    selected_samples <- GemHumMonHyaRefGemPlink %>%
+      group_by(Species) %>%
+      sample_n(4)
+    
+    # GLM
+    glm_model <- glm(F ~ Species, data = selected_samples)
+    
+    # FDR（emmeans）
+    tukey_result <- emmeans(glm_model, pairwise ~ Species, adjust = "fdr")
+    
+    # contrasts P values
+    contrast_summary <- summary(tukey_result$contrasts)
+    pvalues <- contrast_summary$p.value
+    
+    # 
+    return(pvalues)
+  }, error = function(e) {
+    # 
+    return(rep(NA, 28))  # 
+  })
+}, simplify = FALSE)
+
+# 
+pvalues_df <- do.call(rbind, results) %>%
+  as.data.frame()
+
+# 
+contrast_summary <- summary(tukey_result$contrasts)
+column_names <- contrast_summary$contrast  # 比較名が保存されている列
+
+# 
+colnames(pvalues_df) <- column_names
+
+# 
+print(head(pvalues_df))
+
+# 
+mean_pvalues <- pvalues_df %>%
+  summarise(across(everything(), \(x) mean(x, na.rm = TRUE)))
+
+# 
+print(mean_pvalues)
+
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    axis.line = element_line(size = 0.5, color = "black"),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    axis.title.x = element_text(size = 12),           
+    axis.title.y = element_text(size = 12)            
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples F", 
+    x = "Comparison",                                        
+    y = "P-value"                                            
+  )
+
+custom_order <- c(
+  "hya - cyt", "bif - cyt", "cyt - sub", "hya - bif", "hya - sub", "bif - sub",
+  "cyt - gem", "cyt - hum", "cyt - mon", 
+  "hya - gem", "hya - hum", "hya - mon", 
+  "bif - gem", "bif - hum", "bif - mon", 
+  "sub - gem", "sub - hum", "sub - mon","gem - hum","gem - mon","hum - mon",
+  "cyt - hyb", "hya - hyb", "bif - hyb", "sub - hyb",
+  "gem - hyb", "hum - hyb", "mon - hyb"
+)
+
+# Plot again
+pvalues_df %>%
+  pivot_longer(cols = everything(), names_to = "Comparison", values_to = "Pvalue") %>%
+  mutate(Comparison = factor(Comparison, levels = custom_order)) %>%  
+  ggplot(aes(x = Comparison, y = Pvalue)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(size = 0.5, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12)
+  ) +
+  labs(
+    title = "P-value Distribution Across 100 Random Samples F",
+    x = "Comparison",
+    y = "P-value"
+  )
+
