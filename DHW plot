@@ -1,0 +1,83 @@
+# 必要なパッケージを読み込む
+if (!requireNamespace("readxl", quietly = TRUE)) install.packages("readxl")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("lubridate", quietly = TRUE)) install.packages("lubridate")
+if (!requireNamespace("zoo", quietly = TRUE)) install.packages("zoo")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+library(readxl)
+library(ggplot2)
+library(lubridate)
+library(zoo)
+library(dplyr)
+
+# データの読み込み
+file_path <- "~/Dropbox/投稿論文/HeatAccumulation_corals_simulation/R_data/temperature_Okinawa_North_table"
+temperature_data <- read.table(file_path, header = TRUE, sep = " ", col.names = c("yyyy", "mm", "dd", "Temp."), fill = TRUE, strip.white = TRUE, blank.lines.skip = TRUE)
+
+# 日付列の作成
+temperature_data$date <- as.Date(with(temperature_data, paste(yyyy, mm, dd, sep = "-")), "%Y-%m-%d")
+
+# 一日の平均温度を計算
+daily_avg_temp <- temperature_data %>%
+  group_by(date) %>%
+  summarise(temperature = mean(Temp.))
+
+# DHWの計算関数
+calculate_dhw <- function(temperature_data, threshold_temp) {
+  temperature_data <- temperature_data %>%
+    mutate(SST_anomaly = temperature - threshold_temp) %>%
+    mutate(DHD = ifelse(SST_anomaly > 1, SST_anomaly, 0)) %>%
+    mutate(DHW = rollapply(DHD, width = 84, FUN = sum, fill = NA, align = 'right') / 7)
+  return(temperature_data)
+}
+
+# 基準温度のリスト
+threshold_temps <- c(28.943, 29.0, 29.5)
+
+# 各基準温度でのDHWを計算
+dhw_list <- lapply(threshold_temps, function(threshold) {
+  calculate_dhw(daily_avg_temp, threshold) %>%
+    mutate(threshold_temp = threshold)
+})
+
+# データを結合
+temperature_with_dhw <- bind_rows(dhw_list)
+
+# 各年の7~8月の平均水温を計算
+summer_avg_temp <- daily_avg_temp %>%
+  filter(month(date) %in% c(7, 8)) %>%
+  group_by(year = year(date)) %>%
+  summarise(summer_avg_temp = mean(temperature)) %>%
+  mutate(date = as.Date(paste(year, "-08-01", sep = "")))
+
+# カスタムラベルの設定
+custom_labels <- c("28.943" = "1982~2022", "29.0" = "1999~2022", "29.5" = "2017~2022")
+
+# プロット
+ggplot() +
+  geom_line(data = temperature_with_dhw, aes(x = date, y = temperature, color = "Water Temperature"), size = 0.5, alpha = 0.7) +
+  geom_line(data = temperature_with_dhw, aes(x = date, y = DHW + 10, color = factor(threshold_temp, labels = custom_labels)), size = 0.5, alpha = 0.7) +  # DHWのスケール調整
+  geom_point(data = summer_avg_temp, aes(x = date, y = summer_avg_temp, color = "Summer Avg Temp"), size = 2) +
+  geom_line(data = summer_avg_temp, aes(x = date, y = summer_avg_temp, color = "Summer Avg Temp"), size = 0.8, linetype = "dashed") +
+  geom_smooth(data = summer_avg_temp, aes(x = date, y = summer_avg_temp, color = "Regression Line"), method = "lm", linetype = "solid", size = 0.8, se = FALSE) +  # 回帰直線を追加
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(10, 32),
+    sec.axis = sec_axis(~ . - 10, name = "DHW (°C-weeks)", breaks = seq(0, 15, by = 5))  # DHWのスケール調整
+  ) +
+  scale_color_manual(values = c("red", "darkgreen", "blue", "red", "orange", "blue")) +  # カスタム色設定
+  labs(title = "40-Year Temperature and Degree Heating Weeks (DHW)",
+       x = "Date",
+       color = "Legend") +
+  theme_minimal() +
+  theme(
+    axis.title.y.left = element_text(color = "blue"),
+    axis.title.y.right = element_text(color = "red"),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black")
+  ) +
+  geom_hline(yintercept = 4 + 10, linetype = "dashed", color = "orange", size = 0.5) +  # DHWのスケール調整
+  geom_hline(yintercept = 8 + 10, linetype = "dashed", color = "red", size = 0.5) +  # DHWのスケール調整
+  annotate("text", x = as.Date("2020-01-01"), y = 4 + 10, label = "Moderate bleaching risk", color = "orange", vjust = -0.5) +  # DHWのスケール調整
+  annotate("text", x = as.Date("2020-01-01"), y = 8 + 10, label = "Severe bleaching risk", color = "red", vjust = -0.5)  # DHWのスケール調整
