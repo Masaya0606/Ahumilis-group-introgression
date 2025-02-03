@@ -1,0 +1,70 @@
+# データを読み込みます (CHROM, BIN_START, N_SNPS, TajimaDのヘッダーを持つ)
+bigStep_gem <- read.table("/Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem.10K.Tajima.D_ed2", as.is=T, header=T)
+bigStep_hum <- read.table("/Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.hum.10K.Tajima.D_ed2", as.is=T, header=T)
+bigStep_mon <- read.table("/Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.mon.10K.Tajima.D_ed2", as.is=T, header=T)
+
+# awkコマンドを使用してCHROMの項目名リストを取得
+chr_list_gem <- system("awk 'NR > 1 {print $1}' /Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.gem.10K.Tajima.D_ed2 | sort | uniq | grep -v CHROM", intern = TRUE)
+chr_list_hum <- system("awk 'NR > 1 {print $1}' /Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.hum.10K.Tajima.D_ed2 | sort | uniq | grep -v CHROM", intern = TRUE)
+chr_list_mon <- system("awk 'NR > 1 {print $1}' /Users/moritamasaya/NGS_analyses/VCF_pai_TajimaD/GemHumMon2401/GemHumMon2401refAgemv_geno005_maf001_hwe.mon.10K.Tajima.D_ed2 | sort | uniq | grep -v CHROM", intern = TRUE)
+
+# chrごとのデータを連結 (CHROM列を使用)
+concatenated_data_gem <- bigStep_gem[bigStep_gem$CHROM %in% chr_list_gem, ]
+concatenated_data_gem$global_position <- NA
+concatenated_data_hum <- bigStep_hum[bigStep_hum$CHROM %in% chr_list_hum, ]
+concatenated_data_hum$global_position <- NA
+concatenated_data_mon <- bigStep_mon[bigStep_mon$CHROM %in% chr_list_mon, ]
+concatenated_data_mon$global_position <- NA
+
+# グローバルな位置をそれぞれ計算して追加
+offset <- 0
+
+
+# グローバルな位置をスキャフォールドごとに計算
+calculate_global_position <- function(data) {
+  unique_chroms <- unique(data$CHROM)  # スキャフォールドのリスト取得
+  offset <- 0
+  global_positions <- numeric(nrow(data))  # グローバルな位置を格納するベクトル
+  
+  for (chr in unique_chroms) {
+    chr_data <- data[data$CHROM == chr, ]
+    chr_indices <- which(data$CHROM == chr)
+    data[chr_indices, "global_position"] <- chr_data$BIN_START + offset
+    offset <- offset + max(chr_data$BIN_START, na.rm = TRUE) + 10000  # 余白を加えて次のスキャフォールドへ
+  }
+  
+  return(data)
+}
+
+# 各データセットに適用
+concatenated_data_gem <- calculate_global_position(concatenated_data_gem)
+concatenated_data_hum <- calculate_global_position(concatenated_data_hum)
+concatenated_data_mon <- calculate_global_position(concatenated_data_mon)
+
+# NAのある行を削除
+concatenated_data_gem_clean <- na.omit(concatenated_data_gem[, c("global_position", "TajimaD")])
+concatenated_data_hum_clean <- na.omit(concatenated_data_hum[, c("global_position", "TajimaD")])
+concatenated_data_mon_clean <- na.omit(concatenated_data_mon[, c("global_position", "TajimaD")])
+
+# グローバルな位置でソート
+concatenated_data_gem_clean <- concatenated_data_gem_clean[order(concatenated_data_gem_clean$global_position), ]
+concatenated_data_hum_clean <- concatenated_data_hum_clean[order(concatenated_data_hum_clean$global_position), ]
+concatenated_data_mon_clean <- concatenated_data_mon_clean[order(concatenated_data_mon_clean$global_position), ]
+
+# 5th percentileと1st percentileを計算
+TajimaD_5th_gem <- quantile(concatenated_data_gem_clean$TajimaD, 0.05)
+TajimaD_5th_hum <- quantile(concatenated_data_hum_clean$TajimaD, 0.05)
+TajimaD_5th_mon <- quantile(concatenated_data_mon_clean$TajimaD, 0.05)
+
+# 修正後のプロット作成
+plot(concatenated_data_gem_clean$global_position, concatenated_data_gem_clean$TajimaD, type="l",
+     xlab="Genomic Position", ylab="Tajima's D (A.cf.gemmifera)", main="Tajima's D across genome (A.cf.gemmifera)")
+abline(h = TajimaD_5th_gem, col = "red", lty = 2)
+
+plot(concatenated_data_hum_clean$global_position, concatenated_data_hum_clean$TajimaD, type="l",
+     xlab="Genomic Position", ylab="Tajima's D (A.cf.humilis)", main="Tajima's D across genome (A.cf.humilis)")
+abline(h = TajimaD_5th_hum, col = "red", lty = 2)
+
+plot(concatenated_data_mon_clean$global_position, concatenated_data_mon_clean$TajimaD, type="l",
+     xlab="Genomic Position", ylab="Tajima's D (A.cf.monticulosa)", main="Tajima's D across genome (A.cf.monticulosa)")
+abline(h = TajimaD_5th_mon, col = "red", lty = 2)
