@@ -1,0 +1,47 @@
+# load necessary packages
+library(FactoMineR)
+library(factoextra)
+library(readxl)
+library(vegan)
+library(devtools)
+
+# Install pairwiseAdonis from GitHub
+devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+library(pairwiseAdonis)
+
+# Load the data from Excel file
+file_path <- "~/path/Morphology230617_220722_inclHyb_digits3.xlsx"
+data <- read_excel(file_path, sheet = "RevData")
+
+# Select the variables
+FAMD_data <- data[, 5:13]
+
+# Convert categorical columns to factors if necessary
+FAMD_data$BranchShape <- as.factor(FAMD_data$BranchShape)
+FAMD_data$BranchTaper <- as.factor(FAMD_data$BranchTaper)
+FAMD_data$RadialCoralliteSizes <- as.factor(FAMD_data$RadialCoralliteSizes)
+
+# Compute FAMD
+res.famd <- FAMD(FAMD_data, graph = FALSE)
+
+# Extract the FAMD coordinates for individuals
+famd_coords <- res.famd$ind$coord
+
+# Extract the eigenvalues (variances explained by each dimension)
+eigenvalues <- res.famd$eig[, 1]
+
+# Scale the coordinates by the square root of their eigenvalues to weight them
+weighted_coords <- sweep(famd_coords, 2, sqrt(eigenvalues), FUN = "*")
+
+# Prepare the data for PERMANOVA
+# Use the morphospecies as the grouping factor
+morphospecies <- factor(data$Species,
+                        levels = c("A.gemmifera", "A.humilis", "A.monticulosa", "Hybrid"))
+
+# Run overall PERMANOVA
+permanova_results <- adonis(weighted_coords ~ morphospecies, method = "euclidean", permutations = 999)
+print(permanova_results)
+
+# Perform pairwise PERMANOVA for multiple comparisons
+pairwise_results <- pairwise.adonis(weighted_coords, factors = morphospecies, sim.method = "euclidean", p.adjust.m = "holm")
+print(pairwise_results)
