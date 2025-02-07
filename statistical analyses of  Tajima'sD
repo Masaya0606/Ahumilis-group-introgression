@@ -1,0 +1,148 @@
+The script to process and merge these files is made by "makingFileTajimaD.py".
+
+# Load necessary packages
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+data <- read.csv('~/path/combined_tajimaD_with_groups_gem_hya_ref_Agem_windo10K.csv')
+
+# Preview the dataset
+head(data)
+
+# Plot density distribution
+ggplot(data, aes(x = TajimaD, color = Group)) +
+  geom_density(size = 1.2) +
+  labs(title = "Density Plot of TajimaD by Group",
+       x = "TajimaD",
+       y = "Density") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Split data by group
+split_data <- split(data, data$Group)
+
+# Set color palette
+colors <- rainbow(length(split_data))
+
+# Initialize the plot
+plot(NULL, xlim = range(data$TajimaD), ylim = c(0, 1), 
+     xlab = "TajimaD", ylab = "Density", 
+     main = "Density Plot of TajimaD by Group")
+
+# Draw density plots for each group
+for (i in seq_along(split_data)) {
+  group_data <- split_data[[i]]$TajimaD
+  dens <- density(group_data)
+  lines(dens, col = colors[i], lwd = 2)
+}
+
+# Add legend
+legend("topright", legend = names(split_data), col = colors, lwd = 2)
+
+# Boxplot visualization
+boxplot(TajimaD ~ Group, data = data, 
+        xlab = "Group", ylab = "TajimaD", 
+        main = "Boxplot of TajimaD by Group",
+        col = rainbow(length(unique(data$Group))),
+        las = 2,  # Rotate x-axis labels vertically
+        cex.axis = 0.8,  # Adjust x-axis label size
+        outline = FALSE)  # Hide outliers if needed
+
+## Violin plot
+# Load the required package
+library(vioplot)
+
+# Extract unique group names
+groups <- unique(data$Group)
+
+# Adjust margin for better label display
+par(mar = c(8, 4, 4, 2) + 0.1)
+
+# Convert data into a list by group
+data_list <- lapply(groups, function(g) data$TajimaD[data$Group == g])
+
+# Draw violin plot
+vioplot(data_list, names = groups, col = rainbow(length(groups)), las = 2)
+
+# Add labels and title
+title(xlab = "Group", ylab = "TajimaD", main = "Violin Plot of TajimaD by Group")
+
+# Define a specific order for groups
+desired_order <- c('Ahyacinthus', 'Acytherea', 'Abifurcata', 'Asubulata', 'Agemmifera', 'Ahumilis', 'Amonticulosa', 'Hybrids')
+group_colors <- ifelse(desired_order %in% c('Ahyacinthus', 'Acytherea', 'Abifurcata', 'Asubulata'), 
+                       adjustcolor("white", alpha.f = 0.7), 
+                       adjustcolor("gray", alpha.f = 0.7))
+
+groups <- unique(data$Group)
+par(mar = c(8, 4, 4, 2) + 0.1)
+data_list <- lapply(desired_order, function(g) data$TajimaD[data$Group == g])
+vioplot(data_list, names = desired_order, col = group_colors, las = 2)
+abline(h = 0, col = "red", lwd = 2, lty = 2)
+title(xlab = "Group", ylab = "TajimaD", main = "Violin Plot of TajimaD by Group")
+
+## Statistical analysis
+# Install and load fitdistrplus package if necessary
+# install.packages("fitdistrplus")
+library(fitdistrplus)
+
+# Load the dataset
+data <- read.csv('~/NGS_analyses/VCF_pai_TajimaD/combined_tajimaD_with_groups_gem_hya_ref_Agem_windo10K.csv')
+
+# Convert Group into a factor variable
+data$Group <- as.factor(data$Group)
+
+# Fit a normal distribution
+fit_norm <- fitdist(data$TajimaD, "norm")
+print(fit_norm)
+
+# Fit a logistic distribution
+fit_logis <- fitdist(data$TajimaD, "logis")
+print(fit_logis)
+
+# Plot fitting results
+par(mfrow = c(2, 2))
+plot.legend <- c("Normal", "Logistic")
+denscomp(list(fit_norm, fit_logis), legendtext = plot.legend)
+qqcomp(list(fit_norm, fit_logis), legendtext = plot.legend)
+cdfcomp(list(fit_norm, fit_logis), legendtext = plot.legend)
+ppcomp(list(fit_norm, fit_logis), legendtext = plot.legend)
+
+# Compute and compare AIC values
+aic_values <- c(fit_norm$aic, fit_logis$aic)
+names(aic_values) <- plot.legend
+print(aic_values)
+
+# Select the best-fitting distribution
+best_fit <- plot.legend[which.min(aic_values)]
+cat("Best fitting distribution:", best_fit, "\n")
+
+# Apply GLM based on the best-fitting distribution
+if (best_fit == "Normal") {
+  glm_model <- glm(TajimaD ~ Group, data = data, family = gaussian())
+} else if (best_fit == "Logistic") {
+  glm_model <- glm(TajimaD ~ Group, data = data, family = binomial(link = "logit"))
+}
+
+# Model summary
+summary(glm_model)
+
+# Install and load multcomp package if necessary
+# install.packages("multcomp")
+library(multcomp)
+library(emmeans)
+
+# Perform multiple comparisons among groups
+glht_result <- glht(glm_model, linfct = mcp(Group = "Tukey"))
+fdr_result <- emmeans(glm_model, pairwise ~ Group, adjust = "fdr")
+
+# Summarize test results
+summary(glht_result)
+summary(fdr_result)
+
+# Reset plotting layout
+par(mfrow = c(1, 1))
+
+# Plot statistical test results
+par(mar = c(8, 4, 4, 3) + 1)
+plot(glht_result, cex.axis = 0.4, cex = 1)
