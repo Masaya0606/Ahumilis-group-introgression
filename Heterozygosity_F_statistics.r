@@ -1,7 +1,7 @@
 # Calculate Heterozygosity from PLINK processed data
 # Load the file
 GemHumMonHyaRefGemPlink<-read.table("/path/GemHumMonHyaRefGem_geno005_maf001_hwe_header.het", header=T)
-#data_Plink処理後
+#caluclation of He and Ho from VCFtool calculation
 GemHumMonHyaRefGemPlink$He<-c((GemHumMonHyaRefGemPlink$N.NM.-GemHumMonHyaRefGemPlink$E.HOM.)/GemHumMonHyaRefGemPlink$N.NM.)
 GemHumMonHyaRefGemPlink$Ho<-c((GemHumMonHyaRefGemPlink$N.NM.-GemHumMonHyaRefGemPlink$O.HOM.)/GemHumMonHyaRefGemPlink$N.NM.)
 
@@ -145,6 +145,7 @@ ggplot(GemHumMonHyaRefGemPlink, aes(x = Species, y = F)) +
 # Install necessary packages if not installed
 if (!require("tidyverse")) install.packages("tidyverse")
 if (!require("multcomp")) install.packages("multcomp")
+if (!require("emmeans")) install.packages("emmeans")
 
 # load libraries
 library(tidyverse)
@@ -179,9 +180,6 @@ contrast_summary$p.adj <- p.adjust(contrast_summary$p.value, method = "fdr")
 print(contrast_summary)
 
 ##Perform 100 bootstrap iterations for He
-if (!require("emmeans")) install.packages("emmeans")
-library(emmeans)
-
 results <- replicate(100, {
   tryCatch({
     selected_samples <- GemHumMonHyaRefGemPlink %>%
